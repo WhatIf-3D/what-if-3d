@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WHAT IF 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4fa;--panel:#fff;--ink:#14172b;--mut:#5b6080;--line:#d9dcee;--acc:#ff9f43;--acc2:#6c5ce7;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d1c;--panel:#141831;--ink:#eef0ff;--mut:#9aa0c8;--line:#262b52}}
+:root[data-theme="dark"]{--bg:#0b0d1c;--panel:#141831;--ink:#eef0ff;--mut:#9aa0c8;--line:#262b52}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:14px 20px}
+.logo{font-weight:900;letter-spacing:.08em;font-size:22px}.logo b{color:var(--acc)}
+.tag{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;padding:0 20px 24px;max-width:1280px;margin:0 auto}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.stage{position:relative;aspect-ratio:16/9;background:#05060f;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+#gl{width:100%;height:100%;display:block}
+#fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+#guide{position:absolute;top:0;bottom:0;left:50%;width:31.64%;transform:translateX(-50%);border:2px dashed rgba(255,255,255,.55);border-top:0;border-bottom:0;pointer-events:none}
+.cap{position:absolute;left:0;right:0;bottom:0;padding:28px 22px 16px;color:#fff;text-align:center;background:linear-gradient(transparent,rgba(0,0,0,.7));pointer-events:none}
+.cap h2{margin:0;font-size:clamp(16px,2.6vw,26px)}.cap p{margin:4px 0 0;font-size:clamp(12px,1.6vw,15px);opacity:.85}
+.badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 9px;border-radius:99px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 8px;color:var(--mut);font-size:13px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;border-radius:9px}
+button.p{background:var(--acc);border-color:var(--acc);color:#1a1200;font-weight:700}
+.tl{display:flex;gap:4px}
+.seg{position:relative;height:30px;border-radius:7px;background:var(--line);overflow:hidden;padding:0;min-width:0}
+.seg i{position:absolute;inset:0 auto 0 0;width:0;background:var(--acc2);opacity:.85}
+.seg span{position:relative;font-size:11px;color:var(--ink);mix-blend-mode:normal}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+#idea{width:100%;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;margin-bottom:8px}
+#msg{font-size:13px;color:var(--mut);margin:8px 0 0}
+#queue{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--mut)}
+.phone{display:flex;justify-content:center}
+#vert{width:200px;max-width:100%;aspect-ratio:9/16;border-radius:18px;border:3px solid var(--line);background:#000}
+#board{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+#board li{padding:8px 10px;border:1px solid var(--line);border-radius:9px;cursor:pointer;font-size:13px}
+#board li.on{border-color:var(--acc);background:rgba(255,159,67,.12)}
+#board small{display:block;color:var(--mut)}
+[hidden]{display:none!important}
+.cap[dir=rtl]{font-family:Cairo,Tahoma,"Noto Sans Arabic",Arial,sans-serif}
+.lg.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+#expAr{font-family:Cairo,Tahoma,Arial,sans-serif}
+.stage.exporting #gl{visibility:hidden}
+.stage.exporting::after{content:"Exporting... watch the 9:16 preview";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px}
+nav{display:flex;gap:6px}nav button.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+.lib{max-width:1280px;margin:0 auto;padding:0 20px 24px}
+.libhead{display:flex;gap:8px;flex-wrap:wrap}
+.libhead input{flex:1;min-width:220px;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px}
+.vcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.vcard h4{margin:0 0 4px}.vcard small,.note{color:var(--mut);font-size:12px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.card label{display:block;font-size:12px;color:var(--mut);margin-top:6px}
+.card input{width:100%;padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.card button.p{margin-top:8px;width:100%}
+</style>
+</head>
+<body>
+<header><div class="logo">WHAT IF <b>3D</b></div>
+<nav><button id="navLib" class="on">Library</button><button id="navStudio">Studio</button></nav>
+<span class="tag">Procedural low-poly Three.js · no AI generation yet</span></header>
+<section id="library" class="lib">
+  <div class="libhead"><input id="idea" value="What if Saturn replaced the Moon?" aria-label="What if idea"><button class="p" id="go">Generate</button></div>
+  <p id="msg" class="note"></p>
+  <div id="cards" class="cards"></div>
+</section>
+<main class="grid" id="studio" hidden>
+  <section>
+    <div class="stage" id="stage">
+      <canvas id="gl"></canvas><div id="fade"></div><div id="guide"></div>
+      <div class="badge" id="badge"></div>
+      <div class="cap" id="cap"><h2 id="capT"></h2><p id="capS"></p></div>
+    </div>
+    <div class="controls">
+      <button class="p" id="play">Pause</button><button id="restart">Restart</button>
+      <span id="time">0:00 / 0:00</span>
+      <label><input type="checkbox" id="guideChk" checked> 9:16 safe frame</label>
+      <label><input type="checkbox" id="lowChk"> Low-power mode</label>
+      <span>Preview: <button class="lg on" id="langEn">EN</button> <button class="lg" id="langAr">عربي</button></span>
+    </div>
+    <div class="tl" id="tl"></div>
+  </section>
+  <aside>
+    <div class="card"><h3>Video</h3>
+      <input id="stTitle" aria-label="Title">
+      <button class="p" id="expEn">Download English Video (MP4)</button>
+      <button class="p" id="expAr" dir="rtl">تحميل الفيديو بالعربية (MP4)</button>
+      <p id="expMsg" class="note">Each button records a separate 9:16 MP4 in that language, with the What If 3D watermark at the top.</p></div>
+    <div class="card"><h3>Edit scene <span id="edN"></span></h3>
+      <label>Caption<input id="edC" dir="auto"></label><label>Sub-caption<input id="edS" dir="auto"></label><label>Duration (3-12 s)<input id="edD" type="number" min="3" max="12"></label>
+      <div class="row"><button id="edUp">↑</button><button id="edDn">↓</button><button id="edDup">Duplicate</button><button id="edDel">Delete</button></div></div>
+    <div class="card phone"><canvas id="vert" width="540" height="960"></canvas></div>
+    <div class="card"><h3>Storyboard</h3><ol id="board"></ol></div>
+  </aside>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+/* ============ 1. STORYBOARD DATA (swap this for AI-generated JSON later) ============
+   Schema: scenes[{title, caption, sub, dur, world:'space'|'city', cam:{p0,p1,l0,l1}, fx:{crowd,look,tide,shake}}]
+   Camera coords are relative to the world's origin. Every animation below is a pure function of time t. */
+const FX=(c,l,t,s)=>({crowd:c,look:l,tide:t,shake:s});
+const BODY_SATURN={name:"Saturn",hue:0.11,size:1,rings:true,bands:1,star:false},DEF_ENV={tide:0.87,heat:0,quake:1,light:1,cold:0,spin:1,float:0,squash:0,dry:0};
+const SATURN_STORY={title:"What if Saturn replaced the Moon?",body:BODY_SATURN,env:DEF_ENV,scenes:[
+ {title:"The new neighbor",world:"space",dur:7,caption:"What if Saturn replaced the Moon?",sub:"Same orbit. Same sky. One very different neighbor.",
+  cam:{p0:[-8,5,36],p1:[0,3,27],l0:[8,2,-4],l1:[10,2.5,-5]},fx:FX(1,0,0,0)},
+ {title:"A giant in the sky",world:"space",dur:7,caption:"Saturn would span about 17° of sky",sub:"Roughly 30 Full Moons side by side. The rings stretch even wider.",
+  cam:{p0:[6,4,18],p1:[10,3,8],l0:[16,3,-6],l1:[17,3,-8]},fx:FX(1,0,0,0)},
+ {title:"Look up",world:"city",dur:7,caption:"From the ground, the rings arc across the night",sub:"Everyone on the street would stop and stare.",
+  cam:{p0:[-6,3,60],p1:[0,3,54],l0:[5,30,-120],l1:[20,58,-150]},fx:FX(0.15,1,0,0)},
+ {title:"The tides",world:"city",dur:7,caption:"Tidal pull roughly 7,700× the Moon's",sub:"Saturn has about 95 Earth masses. Oceans would surge over the land.",
+  cam:{p0:[25,5.5,60],p1:[10,5,50],l0:[10,40,-120],l1:[10,55,-140]},fx:FX(3,0,1,1)},
+ {title:"Not survivable",world:"space",dur:7,caption:"Stunning to see, impossible to survive",sub:"A thought experiment, not a forecast. Orbits and climate would unravel.",
+  cam:{p0:[12,6,30],p1:[-6,14,52],l0:[10,2,-4],l1:[6,1,-4]},fx:FX(1,0,1,0)}
+]};
+/* Future hook: replace with an async call to an LLM that returns the same schema. */
+const AR_SATURN=[['ماذا لو حلّ زحل محل القمر؟','المدار نفسه، والسماء نفسها، لكن جارٌ مختلف تماماً.'],['سيمتد زحل على نحو 17° من السماء','ما يقارب 30 قمراً مكتملاً جنباً إلى جنب، وحلقاته تمتد أبعد.'],['من الأرض، ستعبر الحلقات سماء الليل','سيتوقف كل من في الشارع ليحدّق.'],['قوة المد أكبر بنحو 7,700 مرة من قوة القمر','كتلة زحل نحو 95 كتلة أرضية، وستغمر المحيطات اليابسة.'],['مشهد مذهل، لكن لا يمكن النجاة منه','تجربة فكرية وليست توقعاً؛ فالمدارات والمناخ ستنهار.']];
+SATURN_STORY.scenes.forEach((x,i)=>x.ar={caption:AR_SATURN[i][0],sub:AR_SATURN[i][1]});
+function planStoryboard(text){return(/saturn/i.test(text)&&/moon/i.test(text))?SATURN_STORY:null;}
+
+/* ============ 2. HELPERS ============ */
+const lerp=(a,b,k)=>a+(b-a)*k, clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const smooth=k=>{k=clamp(k);return k*k*(3-2*k)};
+const v3=(a,b,k)=>new THREE.Vector3(lerp(a[0],b[0],k),lerp(a[1],b[1],k),lerp(a[2],b[2],k));
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(7);
+function colorFaces(geo,fn){const p=geo.attributes.position,c=new Float32Array(p.count*3);
+ for(let i=0;i<p.count;i+=3){const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3;
+  const col=fn(x,y,z);for(let j=0;j<3;j++){c[(i+j)*3]=col.r;c[(i+j)*3+1]=col.g;c[(i+j)*3+2]=col.b}}
+ geo.setAttribute("color",new THREE.BufferAttribute(c,3));}
+const lam=(o={})=>new THREE.MeshLambertMaterial(Object.assign({flatShading:true},o));
+
+/* ============ 3. SCENE BUILDERS (all procedural, no assets) ============ */
+const canvas=document.getElementById("gl");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:"low-power"});
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x05060f);
+const camera=new THREE.PerspectiveCamera(55,16/9,0.1,3000);
+scene.add(new THREE.AmbientLight(0x7788bb,0.6));
+const sun=new THREE.DirectionalLight(0xfff2dd,1.0);sun.position.set(30,50,100);scene.add(sun);
+
+function makeStars(){const n=800,a=new Float32Array(n*3);
+ for(let i=0;i<n;i++){const u=R()*2-1,t=R()*6.283,s=Math.sqrt(1-u*u);a[i*3]=900*s*Math.cos(t);a[i*3+1]=900*u;a[i*3+2]=900*s*Math.sin(t)}
+ const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(a,3));
+ return new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:2,sizeAttenuation:false,fog:false}));}
+const stars=makeStars();scene.add(stars);
+
+function makeEarth(r){const geo=new THREE.IcosahedronGeometry(r,2);
+ colorFaces(geo,(x,y,z)=>{const n=Math.sin(x*1.3+1)*Math.sin(y*1.7)+Math.sin(z*1.5+2)*Math.cos(x*1.1)+0.3*Math.sin(y*3+z);
+  if(Math.abs(y/r)>0.86)return new THREE.Color(0xf4f8ff);
+  return n>0.35?new THREE.Color().setHSL(0.27+0.04*Math.sin(x),0.45,0.38):new THREE.Color().setHSL(0.6,0.7,0.45+0.04*Math.sin(z*2));});
+ const m=new THREE.Mesh(geo,lam({vertexColors:true}));m.rotation.z=0.4;return m;}
+
+function makeSaturn(r,c){c=c||BODY_SATURN;const g=new THREE.Group(),tilt=new THREE.Group();
+ const geo=new THREE.IcosahedronGeometry(r,2);
+ colorFaces(geo,(x,y)=>new THREE.Color().setHSL(c.hue,c.star?0.9:0.45,c.star?0.62+0.08*Math.sin(y/r*20):0.5+0.17*c.bands*(Math.sin(y/r*9)*.5+.5)+0.04*c.bands*Math.sin(y/r*27)+0.03*Math.sin(x/r*11)));
+ tilt.add(new THREE.Mesh(geo,c.star?new THREE.MeshBasicMaterial({vertexColors:true}):lam({vertexColors:true})));
+ if(c.star)tilt.add(new THREE.Mesh(new THREE.SphereGeometry(r*1.25,12,8),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(c.hue,1,.6),transparent:true,opacity:.18})));
+ (c.rings?[[1.35,1.6,0xcdb68a,.9],[1.65,1.92,0xe6d6ac,.95],[2.0,2.3,0xb89f73,.8],[2.35,2.45,0xd8c79c,.6]]:[]).forEach(([a,b,c,o])=>{
+  const ring=new THREE.Mesh(new THREE.RingGeometry(a*r,b*r,48),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:o}));
+  ring.rotation.x=-Math.PI/2;tilt.add(ring);});
+ tilt.rotation.set(0.3,0,0.45);g.add(tilt);g.userData.spin=tilt.children[0];return g;}
+
+/* Space world: Earth + Saturn standing where the Moon used to be */
+const space=new THREE.Group();scene.add(space);
+const earth=makeEarth(4);space.add(earth);
+let saturnS,saturnC;
+
+/* City world: low-poly town, people, trees, rising water */
+const CX=500, city=new THREE.Group();city.position.x=CX;scene.add(city);
+/* The object that replaces the Moon: rebuilt for every storyboard from its body parameters */
+function setBody(c){
+ [[space,saturnS],[city,saturnC]].forEach(([p,o])=>{if(o){p.remove(o);o.traverse(m=>{if(m.geometry)m.geometry.dispose()})}});
+ saturnS=makeSaturn(3.5*c.size,c);saturnS.position.set(18,3,-8);space.add(saturnS);
+ saturnC=makeSaturn(30*c.size,c);saturnC.position.set(40,85,-170);city.add(saturnC);
+ saturnS.visible=saturnC.visible=!c.hidden;}
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),lam({color:0x1f2e36}));ground.rotation.x=-Math.PI/2;city.add(ground);
+const road=new THREE.Mesh(new THREE.PlaneGeometry(600,10),lam({color:0x14191f}));road.rotation.x=-Math.PI/2;road.position.set(0,0.05,-4);city.add(road);
+function windowTex(){const c=document.createElement("canvas");c.width=32;c.height=64;const x=c.getContext("2d");x.fillStyle="#18202e";x.fillRect(0,0,32,64);
+ for(let i=0;i<4;i++)for(let j=0;j<8;j++){if(R()<0.55){x.fillStyle=R()<0.8?"#ffd27a":"#9fd8ff";x.fillRect(i*8+2,j*8+2,4,4)}}
+ const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+const baseTex=windowTex();
+for(let r=0;r<5;r++)for(let c=0;c<11;c++){if(R()<0.1)continue;
+ const w=7+R()*4,d=7+R()*4,h=6+R()*(r<2?30:20);
+ const t=baseTex.clone();t.needsUpdate=true;t.repeat.set(w/7,h/8);
+ const side=lam({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.8,color:new THREE.Color().setHSL(0.6,0.15,0.35+R()*0.15)});
+ const roof=lam({color:0x2b3342});
+ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[side,side,roof,roof,side,side]);
+ b.position.set(-70+c*14+R()*2,h/2,-14-r*16);city.add(b);}
+const trunkG=new THREE.CylinderGeometry(.3,.4,2,5),leafG=new THREE.ConeGeometry(1.8,4.5,6),trunkM=lam({color:0x5a3b22}),leafM=lam({color:0x2f7d46});
+for(let i=0;i<18;i++){const x=-60+R()*120,z=8+R()*50;const t=new THREE.Mesh(trunkG,trunkM);t.position.set(x,1,z);const l=new THREE.Mesh(leafG,leafM);l.position.set(x,4.2,z);city.add(t,l);}
+const water=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshLambertMaterial({color:0x2a7fd0,transparent:true,opacity:.72}));
+water.rotation.x=-Math.PI/2;city.add(water);
+
+const pHead=new THREE.IcosahedronGeometry(.28,1),pLeg=new THREE.BoxGeometry(.28,.8,.3).translate(0,-.4,0),
+ pTorso=new THREE.BoxGeometry(.6,.7,.35),pArm=new THREE.BoxGeometry(.18,.6,.2).translate(0,-.3,0),
+ skinM=lam({color:0xf0c29a}),pantM=lam({color:0x2d3a5a});
+const people=[];
+for(let i=0;i<16;i++){
+ const g=new THREE.Group(),shirt=lam({color:new THREE.Color().setHSL(R(),0.7,0.55)});
+ const legL=new THREE.Mesh(pLeg,pantM),legR=legL.clone();legL.position.set(-.15,.8,0);legR.position.set(.15,.8,0);
+ const torso=new THREE.Mesh(pTorso,shirt);torso.position.y=1.15;
+ const headG=new THREE.Group();headG.position.y=1.55;headG.add(new THREE.Mesh(pHead,skinM));headG.children[0].position.y=.28;
+ const armL=new THREE.Mesh(pArm,shirt),armR=armL.clone();armL.position.set(-.4,1.45,0);armR.position.set(.4,1.45,0);
+ g.add(legL,legR,torso,headG,armL,armR);g.scale.setScalar(1.4);city.add(g);
+ people.push({g,legL,legR,armL,armR,headG,ox:-25+R()*50,amp:8+R()*22,z:20+R()*26,sp:.6+R()*.5,ph:R()*6.28,pointer:R()<.5});}
+
+/* ============ 4. TIMELINE / ANIMATION (pure function of t) ============ */
+let story=SATURN_STORY,starts=[],TOTAL=0,phases=[];
+function indexStory(){starts=[];phases=[];let s=0,p=0;story.scenes.forEach(sc=>{starts.push(s);phases.push(p);s+=sc.dur;p+=sc.fx.crowd*sc.dur});TOTAL=s;}
+function sceneAt(t){let i=0;while(i<story.scenes.length-1&&t>=starts[i+1])i++;return i;}
+function fxAt(name,i,local){const sc=story.scenes,prev=i>0?sc[i-1].fx[name]:sc[0].fx[name];return lerp(prev,sc[i].fx[name],smooth(local/1.5));}
+
+function update(t){
+ const i=sceneAt(t),sc=story.scenes[i],local=t-starts[i],k=smooth(local/sc.dur),off=sc.world==="city"?CX:0;
+ space.visible=sc.world==="space";city.visible=sc.world==="city";
+ const E=Object.assign({},DEF_ENV,story.env),pos=v3(sc.cam.p0,sc.cam.p1,k),look=v3(sc.cam.l0,sc.cam.l1,k),sh=fxAt("shake",i,local)*E.quake;
+ camera.position.set(pos.x+off+Math.sin(t*37)*.18*sh,pos.y+Math.cos(t*43)*.12*sh,pos.z+Math.sin(t*29)*.12*sh);
+ camera.lookAt(look.x+off,look.y,look.z);
+ stars.position.copy(camera.position);
+ const hz=E.heat*clamp(t/TOTAL);scene.background.setRGB(lerp(.02,.25,hz),lerp(.024,.05,hz),lerp(.06,.03,hz));sun.color.setRGB(1,lerp(.95,.6,hz),lerp(.87,.35,hz));
+ const rp=clamp(t/TOTAL*1.4),cd=E.cold*rp,dr=E.dry*rp;sun.intensity=lerp(1,E.light,rp);
+ ground.material.color.setRGB(lerp(lerp(.12,.85,cd),.55,dr),lerp(lerp(.18,.9,cd),.42,dr),lerp(lerp(.21,.95,cd),.23,dr));
+ water.material.color.setRGB(lerp(.16,.9,cd),lerp(.5,.95,cd),lerp(.82,1,cd));water.material.opacity=lerp(.72,.96,cd);
+ earth.rotation.y=.15*(t-(1-E.spin)*t*t/(2*TOTAL));saturnS.userData.spin.rotation.y=t*0.2;saturnC.userData.spin.rotation.y=t*0.2;
+ saturnS.position.y=3+Math.sin(t*.6)*.3;
+ const crowd=sc.fx.crowd,ph=phases[i]+crowd*local,lk=fxAt("look",i,local),tide=fxAt("tide",i,local);
+ water.position.y=-1+tide*4.2*E.tide-E.dry*5*rp+Math.sin(t*2)*.08;
+ const swingAmp=.7*Math.min(1,fxAt("crowd",i,local)*2);
+ people.forEach(p=>{const a=ph*p.sp*.5+p.ph,s=Math.sin(a),d=Math.cos(a)>=0;
+  p.g.position.set(p.ox+s*p.amp,E.float*rp*(2.5+2*Math.sin(t*1.3+p.ph)),p.z);p.g.scale.y=1.4*(1-.3*E.squash*rp);
+  p.g.rotation.y=lerp(d?Math.PI/2:-Math.PI/2,d?Math.PI:-Math.PI,lk);
+  const sw=Math.sin(ph*p.sp*3.2+p.ph)*swingAmp;
+  p.legL.rotation.x=sw;p.legR.rotation.x=-sw;
+  p.armL.rotation.x=-sw*.8;p.armR.rotation.x=p.pointer?lerp(sw*.8,-2.8,lk):sw*.8;
+  p.headG.rotation.x=-.65*lk;});
+ return {i,sc,local};
+}
+
+/* ============ 5. UI: playback, captions, timeline, 9:16 preview ============ */
+const $=id=>document.getElementById(id),vert=$("vert"),vctx=vert.getContext("2d");
+let t=0,playing=true,last=performance.now(),lastDrawn=0,lastScene=-1,segs=[],exporting=false,boost=0,lib=[],cur=null,lang='en';
+const fmt=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+
+function buildUI(){
+ $("tl").innerHTML="";$("board").innerHTML="";segs=[];
+ story.scenes.forEach((sc,i)=>{
+  const b=document.createElement("button");b.className="seg";b.style.flex=sc.dur;b.title=sc.title;b.innerHTML="<i></i><span>"+(i+1)+"</span>";
+  b.onclick=()=>seek(starts[i]);$("tl").appendChild(b);segs.push(b.firstChild);
+  const li=document.createElement("li");li.innerHTML="<b>"+(i+1)+". "+sc.title+"</b><small>"+sc.caption+"</small>";li.onclick=()=>seek(starts[i]);$("board").appendChild(li);});
+}
+function seek(x){t=clamp(x,0,TOTAL-0.001);if(!playing)playing=false;syncBtn();}
+function syncBtn(){$("play").textContent=playing?"Pause":(t>=TOTAL-0.01?"Replay":"Play");}
+$("play").onclick=()=>{if(exporting)return;if(t>=TOTAL-0.01)t=0;playing=!playing;syncBtn();};
+$("restart").onclick=()=>{if(exporting)return;t=0;playing=true;syncBtn();};
+$("guideChk").onchange=e=>$("guide").style.display=e.target.checked?"":"none";
+$("lowChk").onchange=resize;
+addEventListener("keydown",e=>{if(e.code==="Space"&&e.target.tagName!=="INPUT"&&!$("studio").hidden){e.preventDefault();$("play").click();}});
+
+function wrap(ctx,text,x,y,w,lh){const words=text.split(" ");let line="";for(const wd of words){const test=line+wd+" ";if(ctx.measureText(test).width>w&&line){ctx.fillText(line,x,y);line=wd+" ";y+=lh}else line=test}ctx.fillText(line,x,y);return y+lh;}
+const tx=sc=>(lang==='ar'&&sc.ar)?sc.ar:sc;
+/* Fixed watermark, drawn last so it stays visible in preview AND in the exported video */
+function watermark(){
+ vctx.save();vctx.font="800 15px system-ui,sans-serif";vctx.textAlign="left";
+ const a="WHAT IF ",b="3D",wa=vctx.measureText(a).width,wb=vctx.measureText(b).width,w=wa+wb+30,x=135-w/2,y=22,h=32,r=h/2;
+ vctx.fillStyle="rgba(0,0,0,.7)";vctx.beginPath();vctx.moveTo(x+r,y);vctx.arcTo(x+w,y,x+w,y+h,r);vctx.arcTo(x+w,y+h,x,y+h,r);vctx.arcTo(x,y+h,x,y,r);vctx.arcTo(x,y,x+w,y,r);vctx.closePath();vctx.fill();
+ vctx.strokeStyle="rgba(255,255,255,.35)";vctx.lineWidth=1;vctx.stroke();
+ vctx.fillStyle="#fff";vctx.fillText(a,x+15,y+21);vctx.fillStyle="#ff9f43";vctx.fillText(b,x+15+wa,y+21);vctx.restore();}
+function drawVertical(sc,fade){
+ const sh=canvas.height,sw=sh*9/16,sx=(canvas.width-sw)/2;
+ vctx.setTransform(vert.width/270,0,0,vert.width/270,0,0);vctx.drawImage(canvas,sx,0,sw,sh,0,0,270,480);
+ const g=vctx.createLinearGradient(0,280,0,480);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.75)");vctx.fillStyle=g;vctx.fillRect(0,280,270,200);
+ const X=tx(sc),AR=lang==='ar',FF=AR?'Cairo,Tahoma,"Noto Sans Arabic",Arial,sans-serif':'system-ui,sans-serif';
+ vctx.direction=AR?'rtl':'ltr';vctx.textAlign="center";vctx.fillStyle="#fff";vctx.font=(AR?'800 22px ':'bold 19px ')+FF;
+ let y=wrap(vctx,X.caption,135,AR?345:370,236,AR?30:23);vctx.font=(AR?'600 14px ':'12px ')+FF;vctx.globalAlpha=.9;wrap(vctx,X.sub,135,y+4,230,AR?21:15);vctx.globalAlpha=1;vctx.direction='ltr';
+ vctx.fillStyle="rgba(0,0,0,"+fade+")";vctx.fillRect(0,0,270,480);
+ watermark();
+}
+
+function loadStory(s){story=s;setBody(s.body||BODY_SATURN);indexStory();buildUI();t=0;playing=true;lastScene=-1;syncBtn();}
+function resize(){
+ const w=$("stage").clientWidth,h=$("stage").clientHeight,low=$("lowChk").checked;if(!w||!h||exporting)return;
+ renderer.setPixelRatio(boost||(low?0.6:Math.min(devicePixelRatio||1,1.5)));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe($("stage"));
+
+function frame(now){
+ requestAnimationFrame(frame);
+ if($("studio").hidden){last=now;return}
+ const minGap=exporting?1000/30-3:($("lowChk").checked?1000/30:0);if(now-lastDrawn<minGap)return;lastDrawn=now;
+ const dt=Math.min(0.1,(now-last)/1000);last=now;
+ if(exporting){t=clamp((now-expT0)/1000,0,TOTAL)}else if(playing){t+=dt;if(t>=TOTAL){t=TOTAL;playing=false;syncBtn();}}
+ const {i,sc,local}=update(Math.min(t,TOTAL-0.0001));
+ const fade=1-smooth(Math.min(local,sc.dur-local)/0.5);
+ renderer.render(scene,camera);
+ drawVertical(sc,fade*(t>=TOTAL?1:1));
+ $("fade").style.opacity=fade;
+ if(i!==lastScene){lastScene=i;fillEditor(i);$("capT").textContent=tx(sc).caption;$("capS").textContent=tx(sc).sub;$("cap").dir=lang==="ar"?"rtl":"ltr";$("badge").textContent="Scene "+(i+1)+" / "+story.scenes.length+" · "+sc.title;
+  [...$("board").children].forEach((li,n)=>li.classList.toggle("on",n===i));}
+ segs.forEach((s,n)=>s.style.width=clamp((t-starts[n])/story.scenes[n].dur)*100+"%");
+ $("time").textContent=fmt(t)+" / "+fmt(TOTAL);
+}
+
+/* ============ 6. LIBRARY, SCENE EDITOR & EXPORT ============
+   Library = array of {id,title,scenes,updated} in localStorage (this browser only). Swap saveLib/loadLib for a backend later. */
+const KEY='whatif3d.library.v1',uid=()=>Math.random().toString(36).slice(2,9),clone=o=>JSON.parse(JSON.stringify(o));
+function saveLib(){try{localStorage.setItem(KEY,JSON.stringify(lib))}catch(e){}}
+function loadLib(){let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
+ try{lib=raw?JSON.parse(raw):null}catch(e){lib=null}
+ if(!Array.isArray(lib)){lib=[{id:uid(),title:SATURN_STORY.title,body:SATURN_STORY.body,env:SATURN_STORY.env,scenes:clone(SATURN_STORY.scenes),updated:Date.now()}];saveLib();}}
+function view(n){$('library').hidden=n!=='lib';$('studio').hidden=n!=='studio';
+ $('navLib').classList.toggle('on',n==='lib');$('navStudio').classList.toggle('on',n==='studio');
+ if(n==='studio')resize();else renderLib();}
+function openStory(id){cur=lib.find(s=>s.id===id);if(!cur)return;if(cur.title===SATURN_STORY.title&&!cur.scenes[0].ar)cur.scenes=clone(SATURN_STORY.scenes);$('stTitle').value=cur.title;loadStory(cur);view('studio');}
+function renderLib(){const box=$('cards');box.innerHTML='';
+ if(!lib.length){box.innerHTML='<p class="note">No storyboards yet. Type a What if... idea above.</p>';return}
+ lib.forEach(s=>{const d=s.scenes.reduce((a,x)=>a+x.dur,0),c=document.createElement('div');c.className='vcard';
+  const h=document.createElement('h4');h.textContent=s.title;
+  const sm=document.createElement('small');sm.textContent=s.scenes.length+' scenes · '+d+'s · edited '+new Date(s.updated).toLocaleDateString();
+  const row=document.createElement('div');row.className='row';
+  const mk=(n,f)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>f(b);row.appendChild(b);return b};
+  mk('Open / Edit',()=>openStory(s.id)).classList.add('p');
+  mk('Duplicate',()=>{const k=clone(s);k.id=uid();k.title=s.title+' (copy)';k.updated=Date.now();lib.unshift(k);saveLib();renderLib()});
+  mk('Delete',b=>{if(b.dataset.arm){lib=lib.filter(x=>x.id!==s.id);saveLib();renderLib()}else{b.dataset.arm=1;b.textContent='Confirm delete?';setTimeout(()=>{b.dataset.arm='';b.textContent='Delete'},3000)}});
+  c.append(h,sm,row);box.appendChild(c);});}
+$('navLib').onclick=()=>{playing=false;syncBtn();view('lib')};
+$('navStudio').onclick=()=>{if(!lib.length)return;openStory(cur&&lib.includes(cur)?cur.id:lib[0].id)};
+/* ============ 7. LOCAL STORYBOARD GENERATOR ============
+   Idea text -> story {title, body, env, scenes}, entirely in the browser (keyword rules + real mass/radius numbers). No network calls. */
+const BODIES={
+ saturn:{name:'Saturn',r:58232,m:95.2,hue:.11,size:1,rings:true,bands:1,k:['saturn','زحل']},
+ jupiter:{name:'Jupiter',r:69911,m:317.8,hue:.07,size:1.15,rings:false,bands:1,k:['jupiter','المشتري']},
+ mars:{name:'Mars',r:3390,m:.107,hue:.03,size:.45,rings:false,bands:.15,k:['mars','المريخ']},
+ venus:{name:'Venus',r:6052,m:.815,hue:.12,size:.6,rings:false,bands:.3,heat:.3,k:['venus','الزهرة']},
+ neptune:{name:'Neptune',r:24622,m:17.1,hue:.6,size:.8,rings:false,bands:.4,k:['neptune','نبتون']},
+ uranus:{name:'Uranus',r:25362,m:14.5,hue:.5,size:.8,rings:true,bands:.1,k:['uranus','أورانوس']},
+ sun:{name:'the Sun',r:696000,m:333000,hue:.13,size:1.6,rings:false,bands:0,star:true,heat:1,k:[' sun','الشمس']}};
+const TITLES=['The new neighbor','Size in the sky','Look up','The effects','Aftermath'];
+const fmtN=n=>n>=100?Math.round(n).toLocaleString('en-US'):n>=10?String(Math.round(n)):String(Math.round(n*10)/10);
+function mkStory(text,body,env,caps){return{title:text,body,env,scenes:camFix(body,clone(SATURN_STORY.scenes).map((s,i)=>Object.assign(s,{title:caps[i].title||TITLES[i],caption:caps[i].caption,sub:caps[i].sub,ar:caps[i].ar})))}}
+function ruleBased(text){return templateScenario(text)||moonSwap(text)}
+const AR_NAME={saturn:'زحل',jupiter:'المشتري',mars:'المريخ',venus:'الزهرة',neptune:'نبتون',uranus:'أورانوس',sun:'الشمس'};
+const C=(a,b,c,d)=>({caption:a,sub:b,ar:{caption:c,sub:d}});
+function moonSwap(text){
+ const low=' '+text.toLowerCase(),key=Object.keys(BODIES).find(k=>BODIES[k].k.some(w=>low.includes(w))),replaces=/replac|instead of|place of|moon|القمر|بدل/.test(low);
+ if(key){const b=BODIES[key],an=AR_NAME[key],ve=(key==='venus'||key==='sun')?'حلّت':'حلّ',ang=2*Math.atan(b.r/384400)*180/Math.PI,moons=ang/0.52,tide=b.m/0.0123,lvl=clamp(Math.log10(tide)/4.5,.1,1);
+  const end=(lvl>.7||b.star)?['Stunning to see, impossible to survive','A thought experiment, not a forecast. Orbits and climate would unravel.','مشهد مذهل، لكن لا يمكن النجاة منه','تجربة فكرية وليست توقعاً؛ فالمدارات والمناخ ستنهار.']:lvl>.3?['Earth would be reshaped','Extreme tides would remake coastlines and ecosystems.','ستتغير الأرض جذرياً','مدود هائلة ستعيد تشكيل السواحل والنظم البيئية.']:['Earth would survive','Stronger tides and a very different night sky.','ستنجو الأرض','مدود أقوى وسماء ليل مختلفة تماماً.'];
+  const NA=b.name[0].toUpperCase()+b.name.slice(1);
+  return mkStory(text,{name:b.name,hue:b.hue,size:b.size,rings:b.rings,bands:b.bands,star:!!b.star},{tide:lvl,heat:b.heat||0,quake:clamp(lvl*1.1,.15,1)},[
+   C('What if '+b.name+' replaced the Moon?','Same orbit. Same sky. One very different neighbor.','ماذا لو '+ve+' '+an+' محل القمر؟','المدار نفسه، والسماء نفسها، لكن جارٌ مختلف تماماً.'),
+   C(NA+' would span about '+fmtN(ang)+'° of sky','Roughly '+fmtN(moons)+' Full Moons side by side.'+(b.rings?' The rings stretch even wider.':''),'سيشغل '+an+' نحو '+fmtN(ang)+'° من السماء','ما يقارب '+fmtN(moons)+' قمراً مكتملاً جنباً إلى جنب.'+(b.rings?' وحلقاته تمتد أبعد.':'')),
+   C(b.rings?'From the ground, the rings arc across the night':b.star?'The sky would blaze at midnight':b.name+' would hang huge in the night sky','Everyone on the street would stop and stare.',b.rings?'من الأرض، ستعبر الحلقات سماء الليل':b.star?'ستتوهج السماء في منتصف الليل':'سيبدو '+an+' هائلاً في سماء الليل','سيتوقف كل من في الشارع ليحدّق.'),
+   C('Tidal pull roughly '+fmtN(tide)+"× the Moon's",b.name+' has about '+fmtN(b.m)+' Earth masses. '+(lvl>.6?'Oceans would surge over the land.':lvl>.3?'Coastlines would flood regularly.':'Tides would be noticeably stronger.'),'قوة المد أكبر بنحو '+fmtN(tide)+' مرة من قوة القمر','كتلة '+an+' نحو '+fmtN(b.m)+' كتلة أرضية. '+(lvl>.6?'ستغمر المحيطات اليابسة.':lvl>.3?'ستغمر الفيضانات السواحل بانتظام.':'ستصبح المدود أقوى بوضوح.')),
+   C(...end)]);}
+ if(!replaces)return null;
+ const m=text.match(/what if (?:the )?(.+?)\s+(?:replac|took|was|were)/i),name=((m&&m[1])||'a mystery object').slice(0,30);let h=0;for(const ch of text)h=(h*31+ch.charCodeAt(0))>>>0;
+ return mkStory(text,{name,hue:(h%360)/360,size:.6+((h>>3)%10)/10,rings:h%3===0,bands:.6,star:false},{tide:.5,heat:0,quake:.5},[
+  C('What if '+name+' replaced the Moon?','Same orbit. Same sky. One very different neighbor.','ماذا لو حلّ «'+name+'» محل القمر؟','المدار نفسه، والسماء نفسها، لكن جارٌ مختلف تماماً.'),
+  C('A new giant in the sky','No physical data for this object, so its size here is illustrative.','عملاق جديد في السماء','لا توجد بيانات فيزيائية لهذا الجرم، فحجمه هنا توضيحي.'),
+  C('From the street, everything changes','Everyone would stop and stare.','من الشارع، كل شيء يتغير','سيتوقف الجميع ليحدّقوا.'),
+  C('Tides would change','Effects are illustrative only: no data for this object.','ستتغير المدود','التأثيرات توضيحية فقط: لا بيانات لهذا الجرم.'),
+  C('Earth would never be the same','A thought experiment, not a forecast.','لن تعود الأرض كما كانت','تجربة فكرية وليست توقعاً.')]);}
+/* ---- Local template scenarios: keyword parser -> parameters for the procedural 3D engine. 100% client-side, no network. ---- */
+const CAMS=[{p0:[-10,6,30],p1:[0,3,20],l0:[0,0,0],l1:[0,0,0]},{p0:[8,4,16],p1:[5,2,9],l0:[0,0,0],l1:[0,0,0]},{p0:[-6,3,60],p1:[0,3,54],l0:[0,18,-100],l1:[10,30,-150]},{p0:[25,5.5,60],p1:[10,5,50],l0:[0,8,-30],l1:[0,8,-50]},{p0:[12,6,30],p1:[-6,14,52],l0:[0,0,0],l1:[0,0,0]}];
+function camFix(b,sc){if(b.hidden)sc.forEach((x,i)=>x.cam=clone(CAMS[i]));return sc}
+function templateScenario(text){
+ const L=' '+text.toLowerCase(),has=(...w)=>w.some(x=>/[^\x00-\x7f]/.test(x)?L.includes(x):new RegExp('\\b'+x).test(L));
+ const gone=has('disappear','vanish','gone','without','no more','evaporat','اختف'),B={name:'none',hue:.1,size:1,rings:false,bands:0,star:false,hidden:true};
+ const mk=(env,caps)=>mkStory(text,B,env,caps.map(c=>C(...c)));
+ if(has('gravity','الجاذبية')){
+  if(has('double','stronger','heavy','twice','more'))return mk({tide:0,quake:.5,squash:1},[
+   ['What if gravity got stronger?','Same planet, heavier everything.','ماذا لو أصبحت الجاذبية أقوى؟','الكوكب نفسه، لكن كل شيء أثقل.'],
+   ['You would weigh more','Mass stays the same; weight rises with gravity.','سيزداد وزنك','الكتلة ثابتة، أما الوزن فيزداد مع الجاذبية.'],
+   ['Everyone feels heavy','Walking, lifting and climbing all get harder.','الجميع يشعر بالثِّقل','المشي والرفع والتسلق كلها تصبح أصعب.'],
+   ['Buildings face more stress',"Structures are designed for today's gravity.",'المباني تتحمل ضغطاً أكبر','صُممت المنشآت لجاذبية اليوم.'],
+   ['Life would adapt, slowly','Tall animals and tall buildings would struggle most.','ستتكيف الحياة ببطء','الحيوانات الطويلة والمباني الشاهقة ستعاني أكثر.']]);
+  const weak=has('half','weaker','less','lower','reduc');
+  return mk({tide:0,quake:weak?.2:.7,float:weak?.45:1},[
+   ['What if gravity '+(weak?'got weaker?':'switched off?'),'Same Earth, one invisible force changed.',weak?'ماذا لو ضعفت الجاذبية؟':'ماذا لو اختفت الجاذبية؟','الأرض نفسها، لكن قوة خفية تغيّرت.'],
+   [weak?'Every step becomes a leap':'Anything unbolted starts to drift','Weight depends on gravity; your mass would stay the same.',weak?'كل خطوة تصبح قفزة':'كل شيء غير مثبّت يبدأ بالطفو','الوزن يعتمد على الجاذبية، أما كتلتك فتبقى كما هي.'],
+   [weak?'People bounce and glide':'Streets full of floating people','With little pull, nothing keeps you on the ground.',weak?'الناس يقفزون ويحلّقون':'شوارع مليئة بالناس الطافين','مع جاذبية ضعيفة لا شيء يبقيك على الأرض.'],
+   weak?['The atmosphere stretches higher','Air and oceans would stay, but spread out more.','سيمتد الغلاف الجوي أعلى','سيبقى الهواء والمحيطات، لكنهما سينتشران أكثر.']:['Air and oceans would drift away','Nothing would hold the atmosphere to the planet.','الهواء والمحيطات ستنجرف بعيداً','لا شيء سيبقي الغلاف الجوي على الكوكب.'],
+   weak?['Life would adapt slowly','Bones, muscles and engineering would all change.','ستتكيف الحياة ببطء','العظام والعضلات والهندسة كلها ستتغير.']:['The planet itself would disperse','Gravity holds Earth together too. A thought experiment only.','الكوكب نفسه سيتبعثر','الجاذبية تمسك الأرض معاً أيضاً. تجربة فكرية فقط.']]);}
+ if(has('stop','still','halt')&&has('earth','spin','rotat','دوران'))return mk({tide:.7,quake:1,spin:0},[
+  ['What if the Earth stopped spinning?','Right now it turns once every 24 hours.','ماذا لو توقفت الأرض عن الدوران؟','حالياً تدور مرة كل 24 ساعة.'],
+  ['The ground moves at 1,670 km/h',"At the equator, that is Earth's surface speed.",'الأرض تتحرك بسرعة 1,670 كم/س','هذه سرعة سطح الأرض عند خط الاستواء.'],
+  ['Anything loose keeps flying east','An abrupt stop would hurl people and buildings sideways.','كل ما هو غير مثبّت يواصل الطيران شرقاً','التوقف المفاجئ سيقذف الناس والمباني جانباً.'],
+  ['A planet-wide tsunami','Oceans would keep moving and flood the land at enormous speed.','تسونامي يعمّ الكوكب','ستواصل المحيطات حركتها وتغمر اليابسة بسرعة هائلة.'],
+  ['A day would last a year','One side would face the Sun for about six months at a time.','سيستمر اليوم سنة كاملة','سيواجه جانب واحد الشمس نحو ستة أشهر متواصلة.']]);
+ if(has('ice','glacier','freez','frozen','melt')){
+  if(has('melt','thaw'))return mk({tide:1,quake:.2},[
+   ['What if all the ice melted?','Glaciers and ice sheets hold a huge store of water.','ماذا لو ذاب كل الجليد؟','الأنهار الجليدية والصفائح الجليدية تخزّن كمية هائلة من الماء.'],
+   ['Sea level would rise roughly 65 m','Enough to put most coastal cities under water.','سيرتفع مستوى البحر نحو 65 متراً','يكفي لإغراق معظم المدن الساحلية.'],
+   ['Coastlines would be redrawn','World maps would need to be redone.','ستُرسم السواحل من جديد','ستحتاج خرائط العالم إلى إعادة رسم.'],
+   ['The water keeps rising',"Today's streets would become tomorrow's seabed.",'الماء يواصل الارتفاع','شوارع اليوم ستصبح قاع بحر الغد.'],
+   ['A new world map','Full melting would take centuries to millennia.','خريطة عالم جديدة','الذوبان الكامل يستغرق قروناً إلى آلاف السنين.']]);
+  return mk({cold:1,light:.55,tide:0,quake:.2},[
+   ['What if the Earth froze over?','Ice creeping from the poles to the equator.','ماذا لو تجمدت الأرض؟','جليد يزحف من القطبين نحو خط الاستواء.'],
+   ['Seas would freeze from the top down','Ice reflects sunlight, which cools the planet further.','البحار ستتجمد من السطح إلى الأعماق','الجليد يعكس ضوء الشمس فيزداد الكوكب برودة.'],
+   ['The city falls silent','Snow, ice and long, cold nights.','المدينة تغرق في الصمت','ثلج وجليد وليالٍ طويلة باردة.'],
+   ['Food and water become scarce','Crops fail when growing seasons disappear.','يندر الغذاء والماء','تفشل المحاصيل حين تختفي مواسم الزراعة.'],
+   ['A "Snowball Earth"','Some scientists think this happened hundreds of millions of years ago.','«أرض كرة الثلج»','يعتقد بعض العلماء أن ذلك حدث قبل مئات الملايين من السنين.']]);}
+ if(has('water','ocean','ماء','محيط')&&gone)return mk({dry:1,tide:0,quake:.2},[
+  ['What if all the water disappeared?','Oceans, rivers, lakes and rain, all gone.','ماذا لو اختفى كل الماء؟','المحيطات والأنهار والبحيرات والمطر، كلها تزول.'],
+  ['Oceans cover 71% of Earth','The sea floor would be exposed to the sky.','المحيطات تغطي 71% من الأرض','سيظهر قاع البحر تحت السماء.'],
+  ['Dry streets, empty skies','No rain, no rivers, no clouds.','شوارع جافة وسماء خالية','لا مطر ولا أنهار ولا غيوم.'],
+  ['Life would collapse','Every living thing, including us, is mostly water.','ستنهار الحياة','كل كائن حي، ونحن منهم، يتكون معظمه من الماء.'],
+  ['A dry, silent planet','A thought experiment, not a forecast.','كوكب جاف وصامت','تجربة فكرية وليست توقعاً.']]);
+ if(has('sun','شمس')&&gone)return mk({light:.03,cold:1,tide:0,quake:.15},[
+  ['What if the Sun disappeared?','One moment it is there. The next, it is not.','ماذا لو اختفت الشمس؟','في لحظة هي موجودة، وفي اللحظة التالية لا.'],
+  ['Darkness would not be instant','For about 8 minutes, light and gravity would keep arriving.','الظلام لن يأتي فوراً','لنحو 8 دقائق سيستمر وصول الضوء والجاذبية.'],
+  ['The sky goes dark, the stars stay','Only starlight is left over the city.','السماء تظلم وتبقى النجوم','لا يبقى فوق المدينة سوى ضوء النجوم.'],
+  ['Temperatures would plunge','Surface temperatures could fall below freezing within about a week.','ستنهار درجات الحرارة','قد تنخفض حرارة السطح تحت الصفر خلال نحو أسبوع.'],
+  ['Earth drifts off into the dark',"Without the Sun's gravity it would fly off in a straight line.",'الأرض تنجرف في الظلام','بدون جاذبية الشمس ستنطلق في خط مستقيم.']]);
+ if(has('moon','قمر')&&gone)return mk({tide:.15,quake:.1},[
+  ['What if the Moon disappeared?','Our companion for 4.5 billion years, gone.','ماذا لو اختفى القمر؟','رفيقنا منذ 4.5 مليار سنة يرحل.'],
+  ['Nights would be much darker','Moonlight is the brightest natural light after sunset.','ستصبح الليالي أشد ظلمة','ضوء القمر هو أسطع ضوء طبيعي بعد غروب الشمس.'],
+  ['Tides would drop to about a third','Only the Sun would still pull on the oceans.','سينخفض المد إلى نحو الثلث','ستبقى الشمس وحدها تجذب المحيطات.'],
+  ['Seas become slower and gentler','Ecosystems that depend on tides would be disrupted.','البحار تصبح أبطأ وأهدأ','النظم البيئية المعتمدة على المد ستتأثر.'],
+  ['Earth carries on, but changed','Some effects, like axis stability, play out over very long times.','تستمر الأرض لكن بحال مختلف','بعض التأثيرات، كثبات محور الأرض، تظهر على مدى أزمنة طويلة جداً.']]);
+ return null;}
+$('go').onclick=()=>{const text=$('idea').value.trim();if(!text)return;const msg=$('msg');
+ const st=ruleBased(text);
+ if(!st){msg.textContent='Not recognized yet. Try ideas about the Sun, the Moon, water, ice, gravity, Earth stopping its spin, or a planet replacing the Moon (Jupiter, Mars, Saturn, Venus, Neptune, Uranus).';return}
+ const s=Object.assign(st,{id:uid(),updated:Date.now()});lib.unshift(s);saveLib();renderLib();msg.textContent='';
+ openStory(s.id);$('expMsg').textContent='Generated locally in English and Arabic (no server, no AI). Use the two buttons to download each MP4 version.';};
+/* Scene editor (edits the scene currently shown) */
+const ci=()=>Math.max(0,lastScene),touch=()=>{if(cur){cur.updated=Date.now();saveLib()}};
+function fillEditor(i){const s=cur&&cur.scenes[i];if(!s)return;$('edN').textContent=(i+1)+'/'+cur.scenes.length;
+ [['edC',tx(s).caption],['edS',tx(s).sub],['edD',s.dur]].forEach(([id,v])=>{if(document.activeElement!==$(id))$(id).value=v});}
+function reflow(sel){indexStory();buildUI();t=starts[clamp(sel,0,story.scenes.length-1)];lastScene=-1;touch();}
+['edC','edS','edD','stTitle'].forEach(id=>$(id).addEventListener('focus',()=>{if(!exporting){playing=false;syncBtn()}}));
+$('stTitle').oninput=e=>{if(cur){cur.title=e.target.value;touch()}};
+$('edC').oninput=e=>{if(!cur)return;tx(cur.scenes[ci()]).caption=e.target.value;$('capT').textContent=e.target.value;touch()};
+$('edS').oninput=e=>{if(!cur)return;tx(cur.scenes[ci()]).sub=e.target.value;$('capS').textContent=e.target.value;touch()};
+$('edD').onchange=e=>{if(!cur)return;cur.scenes[ci()].dur=clamp(Math.round(+e.target.value||7),3,12);reflow(ci())};
+$('edUp').onclick=()=>{const i=ci();if(!cur||i<1)return;const a=cur.scenes;[a[i-1],a[i]]=[a[i],a[i-1]];reflow(i-1)};
+$('edDn').onclick=()=>{const i=ci(),a=cur&&cur.scenes;if(!a||i>=a.length-1)return;[a[i+1],a[i]]=[a[i],a[i+1]];reflow(i+1)};
+$('edDup').onclick=()=>{const i=ci();if(!cur)return;cur.scenes.splice(i+1,0,clone(cur.scenes[i]));reflow(i+1)};
+$('edDel').onclick=()=>{const i=ci();if(!cur||cur.scenes.length<2)return;cur.scenes.splice(i,1);reflow(Math.min(i,cur.scenes.length-1))};
+/* Export: records the 9:16 canvas (incl. watermark) in real time. MP4 when the browser's recorder supports it, otherwise WebM. */
+async function saveBlob(blob,name){
+ try{const d=(window.claude&&window.claude.use)?await window.claude.use('downloads'):null;
+  if(d){await d.save({filename:name,data:blob});return 'saved'}}catch(e){if(e&&e.code==='declined')return 'declined'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();return 'saved';}
+const setExp=v=>{$('expEn').disabled=v;$('expAr').disabled=v};
+function setLang(v){lang=v;lastScene=-1;$('langEn').classList.toggle('on',v==='en');$('langAr').classList.toggle('on',v==='ar')}
+$('langEn').onclick=()=>setLang('en');$('langAr').onclick=()=>setLang('ar');
+let expT0=0,expAbort=false;
+document.addEventListener('visibilitychange',()=>{if(exporting&&document.hidden)expAbort=true});
+/* Export clock: during recording, timeline time = wall-clock time since the start (t = (now - expT0)/1000), never an accumulated per-frame step.
+   So the video is always exactly TOTAL seconds long and scene changes land on their scheduled times, even if a slow PC drops frames. */
+async function exportVideo(L){
+ if(exporting||!cur)return;const msg=$('expMsg');
+ if(typeof MediaRecorder==='undefined'||!vert.captureStream){msg.textContent='This browser cannot record video. Try a recent Chrome, Edge or Safari.';return}
+ const mime=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+ const ext=mime.startsWith('video/mp4')?'mp4':'webm',FPS=30,[W,H]=$('lowChk').checked?[540,960]:[720,1280],DUR=TOTAL*1000;
+ exporting=true;expAbort=false;const prevLang=lang;lang=L;setExp(true);$('stage').classList.add('exporting');
+ renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();
+ vert.width=W;vert.height=H;
+ const opts={videoBitsPerSecond:8000000};if(mime)opts.mimeType=mime;
+ const rec=new MediaRecorder(vert.captureStream(FPS),opts),chunks=[];
+ rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+ const stopped=new Promise(r=>rec.onstop=r);
+ try{await document.fonts.load('800 22px Cairo','ع')}catch(e){}
+ t=0;lastScene=-1;playing=true;expT0=performance.now();rec.start(500);
+ await new Promise(res=>{const iv=setInterval(()=>{const el=performance.now()-expT0;
+  msg.textContent='Recording '+Math.min(100,Math.round(el/DUR*100))+'% ('+W+'x'+H+', '+FPS+' fps). Keep this tab visible.';
+  if(expAbort||el>=DUR){clearInterval(iv);res()}},100)});
+ rec.stop();await stopped;
+ exporting=false;lang=prevLang;lastScene=-1;playing=false;vert.width=540;vert.height=960;$('stage').classList.remove('exporting');resize();syncBtn();setExp(false);
+ if(expAbort){msg.textContent='Export cancelled because the tab was hidden. Keep it visible and try again.';return}
+ const blob=new Blob(chunks,{type:mime||'video/webm'});
+ const name=(cur.title.replace(/[^\w\u0600-\u06FF]+/g,'-').replace(/^-|-$/g,'')||'what-if-3d')+'-'+L+'.'+ext;
+ const r=await saveBlob(blob,name);
+ msg.textContent=r==='declined'?'Download cancelled.':(ext==='mp4'?'Done: '+fmt(TOTAL)+' MP4 saved.':'Done, but this browser can only record WebM, so a .webm file was saved. Use a recent Chrome or Safari for MP4.');}
+$('expEn').onclick=()=>exportVideo('en');$('expAr').onclick=()=>exportVideo('ar');
+
+loadLib();loadStory(SATURN_STORY);view('lib');resize();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
